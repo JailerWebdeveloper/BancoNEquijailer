@@ -38,7 +38,7 @@ const RetirarDinero = () => {
 
         try {
             // Hacer la solicitud GET al servidor para retirar dinero
-            const response = await axios.get(`https://upc-codex.tech:5600/API/V2/RetirarDinero/${numeroCuenta}/${cantidad}`);
+            const response = await axios.get(`https://upc-codex.tech:5600/API/V2/RetirarDinero/nequi/${numeroCuenta}/${cantidad}`);
             
             // Manejar la respuesta del servidor
             if (response.status === 200 || response.status === 201) {

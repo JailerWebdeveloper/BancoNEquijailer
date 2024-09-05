@@ -103,7 +103,7 @@ const Registro = () => {
                     />
                    
                     <input
-                        type="password"
+                        type="number"
                         name="contrasena"
                         value={formData.contrasena}
                         onChange={handleChange}
