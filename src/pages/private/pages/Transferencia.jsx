@@ -1,14 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AiOutlineArrowLeft } from "react-icons/ai";
+import {jwtDecode} from 'jwt-decode'; // Para decodificar el token
+import axios from 'axios'; // Para hacer la solicitud de transferencia
 
 const TransferirDinero = () => {
-    const [Numero, setNumero] = useState('');
+    const [numeroDestinatario, setNumeroDestinatario] = useState('');
     const [cantidad, setCantidad] = useState('');
     const [banco, setBanco] = useState('');
     const [transferenciaExitosa, setTransferenciaExitosa] = useState(false);
+    const [numeroCuentaUsuario, setNumeroCuentaUsuario] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+
+    // Obtener el número de cuenta del usuario desde el token
+    useEffect(() => {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            const decodedToken = jwtDecode(token);
+            setNumeroCuentaUsuario(decodedToken.numero_de_cuenta); // Guardar el número de cuenta del usuario
+        }
+    }, []);
 
     const handleNumeroChange = (e) => {
-        setNumero(e.target.value);
+        setNumeroDestinatario(e.target.value);
     };
 
     const handleCantidadChange = (e) => {
@@ -19,10 +32,35 @@ const TransferirDinero = () => {
         setBanco(e.target.value);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Aquí se podría realizar la lógica para la transferencia, como una solicitud a una API.
-        setTransferenciaExitosa(true);
+
+        if (cantidad <= 0) {
+            setErrorMessage('La cantidad debe ser mayor que 0.');
+            return;
+        }
+
+        if (!numeroCuentaUsuario) {
+            setErrorMessage('No se pudo obtener el número de cuenta del usuario.');
+            return;
+        }
+
+        try {
+            // Hacer la solicitud GET al servidor para realizar la transferencia
+            const response = await axios.get(`https://upc-codex.tech:5600/API/V2/Transferir/${numeroCuentaUsuario}/${cantidad}/${numeroDestinatario}`);
+            
+            // Manejar la respuesta del servidor
+            if (response.status === 200|| response.status===201) {
+                console.log(response.data)
+                setTransferenciaExitosa(true);
+                setErrorMessage(''); // Limpiar mensaje de error si la solicitud es exitosa
+            } else {
+                setErrorMessage('Hubo un problema al procesar la transferencia.');
+            }
+        } catch (error) {
+            console.error('Error al realizar la transferencia:', error);
+            setErrorMessage('Ocurrió un error durante la transferencia. Inténtalo de nuevo.');
+        }
     };
 
     return (
@@ -40,14 +78,14 @@ const TransferirDinero = () => {
                 {!transferenciaExitosa ? (
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                         <div className="flex flex-col">
-                            <label htmlFor="cedula" className="text-gray-700 mb-2">Numero del destinatario:</label>
+                            <label htmlFor="numeroDestinatario" className="text-gray-700 mb-2">Número del destinatario:</label>
                             <input
                                 type="number"
-                                id="Numero"
-                                value={Numero}
+                                id="numeroDestinatario"
+                                value={numeroDestinatario}
                                 onChange={handleNumeroChange}
                                 className="border border-gray-300 p-3 rounded-md"
-                                placeholder="Ingresa el Numero"
+                                placeholder="Ingresa el número del destinatario"
                                 required
                             />
                         </div>
@@ -83,12 +121,17 @@ const TransferirDinero = () => {
                             </select>
                         </div>
 
+                        {/* Mostrar mensaje de error si hay problemas */}
+                        {errorMessage && (
+                            <p className="text-red-500 text-sm">{errorMessage}</p>
+                        )}
+
                         <button type="submit" className="bg-[#da0081] text-white py-2 rounded-md mt-4">Transferir</button>
                     </form>
                 ) : (
                     <div className="text-center">
                         <h2 className="text-xl font-semibold text-gray-800">Transferencia Exitosa</h2>
-                        <p className="mt-4 text-lg">Has transferido <span className="font-bold">${cantidad}</span> a la cédula <span className="font-bold">{cedula}</span> en el banco <span className="font-bold">{banco}</span>.</p>
+                        <p className="mt-4 text-lg">Has transferido <span className="font-bold">${cantidad}</span> al número <span className="font-bold">{numeroDestinatario}</span> en el banco <span className="font-bold">{banco}</span>.</p>
                         <button
                             className="bg-[#200020] text-white py-2 px-4 rounded-md mt-6"
                             onClick={() => setTransferenciaExitosa(false)}

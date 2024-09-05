@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { AiOutlineQuestion } from "react-icons/ai";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { AiOutlineQuestion, AiOutlineLoading3Quarters } from "react-icons/ai";
 import { IoCopyOutline } from "react-icons/io5";
+import { PiPasswordBold } from "react-icons/pi";
+import axios from 'axios';
 
 const Login = () => {
     const [showAlert, setShowAlert] = useState(false);
     const [showPhoneInput, setShowPhoneInput] = useState(false);
+    const [telefono, setTelefono] = useState('');
+    const [contrasena, setContrasena] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
     const handleDynamicKeyClick = () => {
         setShowAlert(true);
@@ -16,6 +20,33 @@ const Login = () => {
 
     const handleEnterClick = () => {
         setShowPhoneInput(true);
+    };
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        
+        try {
+            // Hacer la solicitud POST al endpoint de login
+            const response = await axios.post('https://upc-codex.tech:5600/API/V2/login/nequi', {
+                telefono: telefono,
+                contrasena: contrasena
+            });
+
+            // Manejar la respuesta si es exitosa
+            if (response.status === 200) {
+                const token = response.data.token; // Suponiendo que se devuelve un token
+                console.log("Login exitoso, token recibido:", token);
+
+                // Guardar el token en localStorage
+                localStorage.setItem('authToken', token);
+
+                // Redirigir al usuario a la página principal
+                window.location.href = '/Home';
+            }
+        } catch (error) {
+            console.error('Error durante el inicio de sesión:', error);
+            setErrorMessage('Error de autenticación. Verifica tu teléfono o contraseña.');
+        }
     };
 
     return (
@@ -29,7 +60,7 @@ const Login = () => {
                             onClick={handleDynamicKeyClick}
                         >
                             <AiOutlineLoading3Quarters className="text-white size-6 " />
-                            <p className="text-white  leading-tight text-center">Clave<br /> Dinamica</p>
+                            <p className="text-white leading-tight text-center">Clave<br /> Dinamica</p>
                             <p className="text-white font-bold text-xl">629955</p>
                             <IoCopyOutline className="text-white font-bold size-6 " />
                         </div>
@@ -79,20 +110,50 @@ const Login = () => {
                             </>
                         ) : (
                             <>
-                               
-                                    <div class="relative mt-2 w-11/12 text-gray-500">
-                                        <div class="absolute inset-y-0 left-3 my-auto h-6 flex items-center border-r pr-2">
-                                            <p class="text-sm outline-none rounded-lg h-full">
+                                {/* Formulario de Login */}
+                                <form onSubmit={handleLogin} className="w-full flex flex-col items-center gap-4">
+                                    <div className="relative mt-2 w-11/12 text-gray-500">
+                                        <div className="absolute inset-y-0 left-3 my-auto h-6 flex items-center border-r pr-2">
+                                            <p className="text-sm outline-none rounded-lg h-full">
                                                 +57
                                             </p>
                                         </div>
-                                        <input type="number" placeholder="Ingresa tu Telefono" class="w-full pl-[4.5rem] pr-3 py-2 appearance-none bg-transparent outline-none border focus:border-slate-600 shadow-sm rounded-lg"/>
+                                        <input
+                                            type="number"
+                                            placeholder="Ingresa tu Telefono"
+                                            className="w-full pl-[4.5rem] pr-3 py-2 appearance-none bg-transparent outline-none border focus:border-slate-600 shadow-sm rounded-lg"
+                                            value={telefono}
+                                            onChange={(e) => setTelefono(e.target.value)}
+                                            required
+                                        />
                                     </div>
-                                <a  href='/Home'
-                                    className="btn w-11/12  bg-[#da0081] text-white text-center rounded-md"
-                                >
-                                    Entra
-                                </a>
+
+                                    <div className="relative mt-2 w-11/12 text-gray-500">
+                                        <div className="absolute inset-y-0 left-3 my-auto h-6 flex items-center border-r pr-2">
+                                            <PiPasswordBold />
+                                        </div>
+                                        <input
+                                            type="password"
+                                            placeholder="Ingresa tu contraseña"
+                                            className="w-full pl-[4.5rem] pr-3 py-2 appearance-none bg-transparent outline-none border focus:border-slate-600 shadow-sm rounded-lg"
+                                            value={contrasena}
+                                            onChange={(e) => setContrasena(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+
+                                    {/* Mostrar mensaje de error si falla la autenticación */}
+                                    {errorMessage && (
+                                        <p className="text-red-500 text-sm">{errorMessage}</p>
+                                    )}
+
+                                    <button
+                                        type="submit"
+                                        className="btn w-11/12 bg-[#da0081] text-white text-center rounded-md"
+                                    >
+                                        Entra
+                                    </button>
+                                </form>
                             </>
                         )}
                     </section>
@@ -100,6 +161,6 @@ const Login = () => {
             </main>
         </>
     );
-}
+};
 
 export default Login;

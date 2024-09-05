@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { AiOutlineQuestion } from "react-icons/ai";
 import { BsArrowBarLeft } from "react-icons/bs";
+import axios from 'axios'; // Importar Axios
+import {jwtDecode} from 'jwt-decode'; // Importar JWT Decode
 
 const Registro = () => {
     const [formData, setFormData] = useState({
@@ -11,6 +13,8 @@ const Registro = () => {
         telefono: ''
     });
 
+    const [errorMessage, setErrorMessage] = useState('');
+
     const handleChange = (e) => {
         setFormData({
             ...formData,
@@ -18,10 +22,43 @@ const Registro = () => {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Aquí puedes manejar el envío del formulario
-        console.log(formData);
+
+        const data = {
+            cedula: parseInt(formData.cedula),
+            nombre: formData.nombre,
+            apellido: formData.apellido,
+            usuario: formData.nombre+formData.apellido,
+            contrasena:formData.contrasena,
+            numerotelefono:formData.telefono
+        }
+
+        console.log(data)
+        try {
+            // Hacer la solicitud POST al endpoint
+            const response = await axios.post('https://upc-codex.tech:5600/API/V2/Usuario/nequi/Registro', data);
+            console.log(response.status)
+            console.log(response.data)
+
+            if (response.status === 200 || response.status === 201) {
+                const token = response.data.token; // Suponiendo que se devuelve un token
+                console.log("Registro exitoso, token recibido:", token);
+
+                // Si hay un token en la respuesta, podrías decodificarlo si es necesario
+                const decodedToken = jwtDecode(token);
+                console.log("Token decodificado:", decodedToken);
+
+                // Guardar el token en el localStorage si es necesario
+                localStorage.setItem('authToken', token);
+
+                // Redirigir o mostrar un mensaje de éxito
+                alert("Registro exitoso");
+            }
+        } catch (error) {
+            console.error('Error durante el registro:', error);
+            setErrorMessage('Hubo un problema al registrar. Por favor, intenta de nuevo.');
+        }
     };
 
     return (
@@ -90,6 +127,10 @@ const Registro = () => {
                             required
                         />
                     </div>
+
+                    {errorMessage && (
+                        <p className="text-red-500 text-sm">{errorMessage}</p>
+                    )}
 
                     <button
                         type="submit"
